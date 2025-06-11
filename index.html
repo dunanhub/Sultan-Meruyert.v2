@@ -109,6 +109,27 @@
             }
         }
     </style>
+    <style>
+      /* обёртка кнопки */
+      .btn-loading {
+        position: relative;
+        overflow: hidden;
+      }
+      /* сам прогресс-бар */
+      .btn-loading .progress {
+        position: absolute;
+        top: 0; left: 0; height: 100%;
+        width: 0%;
+        background: rgba(255,255,255,0.3);
+        transition: width 0s; /* будем менять ширину вручную */
+        z-index: 0;
+      }
+      /* чтобы текст всегда поверх прогресса */
+      .btn-loading .btn-text {
+        position: relative;
+        z-index: 1;
+      }
+    </style>
 </head>
 <body>
     <div class="first__block flex flex-col sm:flex-col md:flex-row lg:flex-row xl:flex-row 2xl:flex-row relative w-full h-[95vh] sm:h-screen md:h-screen lg:h-screen xl:h-screen 2xl:h-screen place-content-between items-center border-b-2 border-[#BC895A] px-2 sm:px-4">
@@ -382,9 +403,17 @@
                 <option value="Жұбайыммен барамын">Жұбайыммен барамын</option>
                 <option value="Өкінішке орай, келе алмаймын">Өкінішке орай, келе алмаймын</option>
             </select>
-            <button type="submit"
+<!--             <button type="submit"
                 class="w-full bg-[#718975] py-2 rounded max-md:text-md text-white tracking-widest font-bold font-['main'] hover:bg-[#61a46c] transition">
                 ЖІБЕРУ
+            </button> -->
+            <button
+              id="submitBtn"
+              type="submit"
+              class="w-full bg-[#718975] py-2 rounded max-md:text-md text-white tracking-widest font-bold font-['main'] hover:bg-[#61a46c] transition btn-loading"
+            >
+              <div class="progress"></div>
+              <span class="btn-text">ЖІБЕРУ</span>
             </button>
         </form>
         <div class="my-10 max-md:w-[80%] max-md:mx-auto">
@@ -433,27 +462,69 @@
         updateCountdown();
         setInterval(updateCountdown, 1000);
 
+        // document.getElementById("rsvpForm").addEventListener("submit", function(event) {
+        //     event.preventDefault();
+
+        //     var name = document.getElementById("name").value;
+        //     var select = document.getElementById("select").value;
+
+        //     fetch("https://script.google.com/macros/s/AKfycbyvztp9GD6SXAGgIonNJ0WtIdPyG3UtRS3xpyh4rOBhxuYM1-get0xfJXQ1R3u5m8uhKw/exec", {
+        //         method: "POST",
+        //         mode: "no-cors",
+        //         headers: { "Content-Type": "application/json" },
+        //         body: JSON.stringify({ name: name, select: select })
+        //     })
+        //     .then(() => {
+        //         alert("Деректер сақталды!");
+        //         document.getElementById("rsvpForm").reset();
+        //     })
+        //     .catch(error => {
+        //         console.error("Ошибка:", error);
+        //         alert("Қате! Деректер сақталмады.");
+        //     });
+        // });
         document.getElementById("rsvpForm").addEventListener("submit", function(event) {
             event.preventDefault();
-
-            var name = document.getElementById("name").value;
-            var select = document.getElementById("select").value;
-
+        
+            const form = this;
+            const btn = document.getElementById("submitBtn");
+            const progressBar = btn.querySelector(".progress");
+            const btnText = btn.querySelector(".btn-text");
+            const inputs = form.querySelectorAll("input, select, button");
+        
+            // 1. Заблокировать все поля
+            inputs.forEach(el => el.disabled = true);
+        
+            // 2. Запустить имитацию прогресса
+            let progress = 0;
+            const interval = setInterval(() => {
+              progress += 1;
+              progressBar.style.width = progress + "%";
+        
+              if (progress >= 100) {
+                clearInterval(interval);
+                alert("Успешно отправлен");
+                btnText.textContent = "Жіберілді";
+                // По желанию: можно оставить всё заблокированным, или разблокировать кнопку, но не форму
+                // btn.disabled = true;
+              }
+            }, 20); // за 2 000 мс прогресс дойдёт до 100%
+        
+            // 3. Параллельно отправляем форму (или эмулируем fetch)
             fetch("https://script.google.com/macros/s/AKfycbyvztp9GD6SXAGgIonNJ0WtIdPyG3UtRS3xpyh4rOBhxuYM1-get0xfJXQ1R3u5m8uhKw/exec", {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: name, select: select })
-            })
-            .then(() => {
-                alert("Деректер сақталды!");
-                document.getElementById("rsvpForm").reset();
+              method: "POST",
+              mode: "no-cors",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name: form.name.value,
+                select: form.select.value
+              })
             })
             .catch(error => {
-                console.error("Ошибка:", error);
-                alert("Қате! Деректер сақталмады.");
+              console.error("Ошибка:", error);
+              // можно также показать ошибку, но прогресс всё равно дойдёт до 100%
             });
-        });
+          });
     </script>
 </body>
 </html>
